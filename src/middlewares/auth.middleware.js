@@ -6,13 +6,12 @@ import {User} from "../models/user.model.js";
 const verifyJWT=asyncHandler(async(req,res,next)=>{
    try {
     const token=req.cookies?.accessToken||req.header("Authorization")?.replace("Bearer","");
-    console.log(req.cookies);
  
     if (!token) {
       throw new ApiError(401,"unauthorized request")
     }
  
-    const payload= jwt.verify(token,process.env.ACCESS_TOKEN_SECRET);
+    const payload=jwt.verify(token,process.env.ACCESS_TOKEN_SECRET);
  
     const user=await User.findById(payload._id).select("-password -refreshToken");
      

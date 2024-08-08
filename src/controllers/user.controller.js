@@ -7,8 +7,8 @@ import { ApiResponse } from "../utils/apiResponse.js";
 const generateAcessAndRefreshToken=async(userId)=>{
    try {
      const user= await User.findById(userId);
-     const accessToken=user.generateAccessToken();
-     const refreshToken=user.generateRefreshToken();
+     const accessToken=await user.generateAccessToken();
+     const refreshToken=await user.generateRefreshToken();
 
      user.refreshToken=refreshToken;
      //console.log(user);
@@ -127,8 +127,8 @@ const logoutUser=asyncHandler(async(req,res)=>{
    await User.findByIdAndUpdate(
     req.user._id,
     {
-        $set:{
-            refreshToken:undefined
+        $unset:{
+            refreshToken:1
         }
     },
     {
@@ -145,7 +145,7 @@ const logoutUser=asyncHandler(async(req,res)=>{
    .clearCookie('accessToken',options)
    .clearCookie('refreshToken',options)
    .json(
-    ApiResponse(200,{},"user logged out")
+    new ApiResponse(200,{},"user logged out")
    )
 
 
