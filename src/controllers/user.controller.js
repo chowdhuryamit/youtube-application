@@ -162,9 +162,9 @@ const refreshAccessToken=asyncHandler(async(req,res)=>{
 
   try {
     const decodedRefreshToken=jwt.verify(incommingRefreshToken,process.env.REFRESH_TOKEN_SECRET);
-  
+    
     const user=await User.findById(decodedRefreshToken?._id);
-     
+    
     if (!user) {
        throw new ApiError(400,"invalid refresh token");
     }
@@ -172,13 +172,12 @@ const refreshAccessToken=asyncHandler(async(req,res)=>{
     if (incommingRefreshToken!==user.refreshToken) {
        throw new ApiError(400,"refresh token is expired or in valid");
     }
-  
+    
     const options={
       httpOnly:true,
       secure:true
     }
-  
-    const {accessToken,refreshToken}=await generateAcessAndRefreshToken(user.Id);
+    const {accessToken,refreshToken}=await generateAcessAndRefreshToken(user._id);
   
     res.status(200)
     .cookie("accessToken",accessToken,options)
