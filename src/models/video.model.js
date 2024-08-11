@@ -40,4 +40,4 @@ videoSchemma.plugin(mongooseAggregatePaginate);
 
 const Video=mongoose.model("Video",videoSchemma);
 
-module.exports=Video;
+export{Video};
