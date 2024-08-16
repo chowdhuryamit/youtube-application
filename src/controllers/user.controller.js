@@ -392,40 +392,40 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
     {
       $match: {
         username: username?.toLowerCase(),
-      },
+      }
     },
     {
       $lookup: {
         from: "subscriptions",
         localField: "_id",
         foreignField: "channel",
-        as: "subscribers",
-      },
+        as: "subscribers"
+      }
     },
     {
       $lookup: {
         from: "subscriptions",
         localField: "_id",
         foreignField: "subscriber",
-        as: "subscribedTo",
-      },
+        as: "subscribedTo"
+      }
     },
     {
       $addFields: {
         subscribersCount: {
-          $size: "subscribers",
+          $size: "$subscribers"
         },
         channelsSubscribedTocount: {
-          $size: "subscribedTo",
+          $size: "$subscribedTo"
         },
         isSubscribed: {
           $cond: {
             if: { $in: [req.user?._id, "$subscribers.subscriber"] },
             then: true,
-            else: false,
-          },
-        },
-      },
+            else: false
+          }
+        }
+      }
     },
     {
       $project: {
@@ -435,9 +435,9 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
         channelsSubscribedTocount: 1,
         isSubscribed: 1,
         avatar: 1,
-        coverImage: 1,
-      },
-    },
+        coverImage: 1
+      }
+    }
   ]);
 
   if (!channel?.length) {
@@ -452,11 +452,12 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
 });
 
 const getWathHistory = asyncHandler(async (req, res) => {
+
   const user = await User.aggregate([
     {
       $match: {
-        _id: new mongoose.Types.ObjectId(req.user._id),
-      },
+        _id: new mongoose.Types.ObjectId(req.user._id)
+      }
     },
     {
       $lookup: {
@@ -476,22 +477,22 @@ const getWathHistory = asyncHandler(async (req, res) => {
                   $project: {
                     fullname: 1,
                     username: 1,
-                    avatar: 1,
-                  },
-                },
-              ],
-            },
+                    avatar: 1
+                  }
+                }
+              ]
+            }
           },
           {
             $addFields: {
               owner: {
-                $first: "$owner",
-              },
-            },
-          },
-        ],
-      },
-    },
+                $first: "$owner"
+              }
+            }
+          }
+        ]
+      }
+    }
   ]);
 
   return res

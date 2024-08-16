@@ -40,4 +40,6 @@ router.patch('/update/avatar',verifyJWT,upload.single("avatar"),updateAvatar);
 router.patch('/update/cover_image',verifyJWT,upload.single("coverImage"),updateCoverImage);
 router.get('/channel/:username',verifyJWT,getUserChannelProfile);
 router.get('/watchHistory',verifyJWT,getWathHistory);
+
+
 export default router;
