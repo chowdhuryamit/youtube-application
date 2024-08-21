@@ -204,9 +204,35 @@ const deleteVideo=asyncHandler(async(req,res)=>{
   return res.status(200).json(new ApiResponse(200,"video deleted successfully"));
 })
 
+const togglePublishStatus=asyncHandler(async(req,res)=>{
+  const {videoId}=req.params;
+
+  if (!videoId) {
+    throw new ApiError(400,"video id is not found");
+  }
+
+  const video=await Video.findById(videoId);
+
+  if (!video) {
+    throw new ApiError(400,"video does not exist");
+  }
+
+  if (!video.owner.equals(req.user._id)) {
+    throw new ApiError(400,"you are not athorized");
+  }
+
+  video.isPublished=!video.isPublished;
+
+  await video.save({validateBeforeSave:false});
+
+  return res.status(200)
+  .json(new ApiResponse(200,video,"video toggled successfully"));
+})
+
 export { 
   publishAVideo, 
   getVideoById, 
   updateVideo,
-  deleteVideo 
+  deleteVideo,
+  togglePublishStatus
 };
