@@ -8,11 +8,11 @@ import { v2 as cloudinary } from "cloudinary";
 
 const publishAVideo = asyncHandler(async (req, res) => {
   const { title, description } = req.body;
-
+  
   if (!(title || description)) {
     throw new ApiError(400, "video title and description is required");
   }
-
+  
   const videoFileLocalPath = req.files?.videoFile[0].path;
 
   if (!videoFileLocalPath) {
@@ -113,6 +113,10 @@ const updateVideo = asyncHandler(async (req, res) => {
 
   const video = await Video.findById(videoId);
 
+  if (!video) {
+    throw new ApiError(400,"video does not exist");
+  }
+
   if (!video.owner.equals(req.user._id)) {
     throw new ApiError(400, "you are unathorized to update this video");
   }
@@ -148,4 +152,61 @@ const updateVideo = asyncHandler(async (req, res) => {
   return res.status(200).json(new ApiResponse(200,video,"video updated successfully"));
 });
 
-export { publishAVideo, getVideoById, updateVideo };
+const deleteVideo=asyncHandler(async(req,res)=>{
+  const {videoId}=req.params;
+
+  if (!videoId) {
+    throw new ApiError(400,"video id is not found")
+  }
+
+  const video=await Video.findById(videoId);
+  if (!video) {
+    throw new ApiError(400,"video does not exist");
+  }
+  if (!video.owner.equals(req.user._id)) {
+    throw new ApiError(400,"you are not authorized to delete this video");
+  }
+
+  await Video.findByIdAndDelete(videoId);
+
+  const videoFileUrl=video.videoFile;
+  const thumbnailFileUrl=video.thumbnails;
+
+  let lastIndexBackslash = thumbnailFileUrl.lastIndexOf("/");
+  let lastIndexDot = thumbnailFileUrl.lastIndexOf(".");
+  const thumbnailPublic_id = thumbnailFileUrl.substring(
+      lastIndexBackslash + 1,
+      lastIndexDot
+  );
+
+  lastIndexBackslash=videoFileUrl.lastIndexOf("/");
+  lastIndexDot=videoFileUrl.lastIndexOf(".");
+  const videoPublic_id = videoFileUrl.substring(
+    lastIndexBackslash + 1,
+    lastIndexDot
+  );
+  
+  await cloudinary.uploader.destroy(videoPublic_id,{ resource_type: 'video' })
+  .then(()=>console.log("video deleted successfully")
+  )
+  .catch(()=>{
+    throw new ApiError(400,"error occured while deleting video from cloudinary");
+  })
+
+
+  await cloudinary.uploader.destroy(thumbnailPublic_id)
+  .then(()=>console.log("thumbnail deleted successfully")
+  )
+  .catch(()=>{
+    throw new ApiError(400,"error occured while deleting thumbnail from cloudinary");
+  })
+
+  return res.status(200).json(new ApiResponse(200,"video deleted successfully"));
+})
+
+export { 
+  publishAVideo, 
+  getVideoById, 
+  updateVideo,
+  deleteVideo 
+};
