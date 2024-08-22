@@ -29,8 +29,43 @@ const addComment=asyncHandler(async(req,res)=>{
 })
 
 
+const updateComment=asyncHandler(async(req,res)=>{
+    const {commentId}=req.params;
+    if (!commentId) {
+        throw new ApiError(400,"comment id is required to edit comment");
+    }
+
+    const {content}=req.body;
+    if(!content?.trim()){
+        throw new ApiError(400,"content is required to edit comment");
+    }
+
+    const comment=await Comment.findById(commentId);
+
+    if (!comment) {
+        throw new ApiError(400,"comment does not exist");
+    }
+
+    if (!comment.owner.equals(req.user._id)) {
+        throw new ApiError(400,"you are not authorized");
+    }
+
+    comment.content=content;
+
+    try {
+        await comment.save({validateBeforeSave:false});
+    } catch (error) {
+        throw new ApiError(400,"error occured while updating comment")
+    }
+
+    return res.status(200)
+    .json(new ApiResponse(200,comment,"comment updated successfully"));
+})
+
+
 
 
 export{
-    addComment
+    addComment,
+    updateComment
 }
