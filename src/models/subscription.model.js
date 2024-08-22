@@ -11,8 +11,8 @@ const subscriptionSchemma= new mongoose.Schema({
    }
 },{timestamps:true})
 
-const subscription=mongoose.model("subscription",subscriptionSchemma);
+const Subscription=mongoose.model("subscription",subscriptionSchemma);
 
 export{
-    subscription
+    Subscription
 }
