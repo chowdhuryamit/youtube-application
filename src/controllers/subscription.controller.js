@@ -47,6 +47,58 @@ const toggleSubscription=asyncHandler(async(req,res)=>{
     `you successfully subscribed this ${subscribed.channel} channel`));
 })
 
+const getSubscribedChannels=asyncHandler(async(req,res)=>{
+    const userId=req.user._id;
+
+    if (!userId) {
+        throw new ApiError(400,"you are unathorized");
+    }
+
+    const allChannels=await Subscription.aggregate([
+        {
+            $match:{
+                subscriber:new mongoose.Types.ObjectId(userId)
+            }
+        },
+        {
+            $lookup:{
+                from:"users",
+                localField:"channel",
+                foreignField:"_id",
+                as:"channel",
+                pipeline:[
+                    {
+                        $project:{
+                            username:1,
+                            avatar:1
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            $addFields:{
+                channel:{$arrayElemAt:["$channel",0]}
+            }
+        },
+        {
+            $project:{
+                _id:1,
+                subscriber:1,
+                channel:1
+            }
+        }
+    ])
+
+    if (!allChannels) {
+        throw new ApiError(400,"subscribed channel is not found");
+    }
+
+    return res.status(200)
+    .json(new ApiResponse(200,allChannels,`you subscribed ${allChannels.length} channels`));
+})
+
 export{
-    toggleSubscription
+    toggleSubscription,
+    getSubscribedChannels
 }

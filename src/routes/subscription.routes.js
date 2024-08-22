@@ -1,6 +1,5 @@
 import { Router } from "express";
-import {toggleSubscription} from "../controllers/subscription.controller.js"
-import {upload} from "../middlewares/multer.middleware.js";
+import {getSubscribedChannels, toggleSubscription} from "../controllers/subscription.controller.js"
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 
 const router=Router();
@@ -8,6 +7,7 @@ const router=Router();
 router.use(verifyJWT);
 
 router.post('/toggleSubscription/:channelId',toggleSubscription);
+router.get('/getSubscibedChannels',getSubscribedChannels);
 
 
 
