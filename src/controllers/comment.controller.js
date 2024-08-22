@@ -2,6 +2,7 @@ import { ApiError } from "../utils/apiError.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { Comment } from "../models/comment.model.js";
 import { ApiResponse } from "../utils/apiResponse.js";
+import mongoose from "mongoose";
 
 
 const addComment=asyncHandler(async(req,res)=>{
@@ -89,8 +90,72 @@ const deleteComment=asyncHandler(async(req,res)=>{
 
 })
 
+
+const getAllComments=asyncHandler(async(req,res)=>{
+    const {videoId}=req.params;
+    
+
+    if (!videoId) {
+        throw new ApiError(400,"video is is required");
+    }
+    const { page = 1, limit = 10 } = req.query
+    const parsedLimit = parseInt(limit);
+    const pageSkip = (page - 1) * parsedLimit;
+
+    const comments=await Comment.aggregate([
+        {
+            $match:{
+                video:new mongoose.Types.ObjectId(videoId)
+            }
+        },
+        {
+            $lookup:{
+                from:"users",
+                localField:"owner",
+                foreignField:"_id",
+                as:"owner",
+                pipeline:[
+                    {
+                        $project:{
+                            username:1,
+                            avatar:1
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            $addFields:{
+                owner:{$arrayElemAt:["$owner",0]}
+            }
+        },
+        {
+            $skip: pageSkip,
+        },
+        {
+            $limit: parsedLimit,
+        },
+        {
+            $project:{
+                content:1,
+                owner:1,
+                updatedAt:1
+            }
+        }
+    ])
+    
+
+    if (!comments) {
+        throw new ApiError(400,"could not fetch comments on this video")
+    }
+
+    return res.status(200)
+    .json(new ApiResponse(200,comments,`${videoId} has ${comments.length} comments`));
+})
+
 export{
     addComment,
     updateComment,
-    deleteComment
+    deleteComment,
+    getAllComments
 }
