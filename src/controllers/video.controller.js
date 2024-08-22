@@ -229,10 +229,63 @@ const togglePublishStatus=asyncHandler(async(req,res)=>{
   .json(new ApiResponse(200,video,"video toggled successfully"));
 })
 
+const getAllVideo=asyncHandler(async(req,res)=>{
+  const {page=1,limit=4,query,sortBy,sortType,userId}=req.query;
+  const parsedLimit = parseInt(limit);
+  const pageSkip = (page - 1) * parsedLimit;
+  const sortStage = {};
+  sortStage[sortBy] = sortType === 'asc' ? 1 : -1;
+
+  const allVideo=await Video.aggregate([
+    {
+      $match:{
+        isPublished:true
+      }
+    },
+    {
+      $lookup:{
+        from:"users",
+        localField:"owner",
+        foreignField:"_id",
+        as:"owner",
+        pipeline:[
+          {
+            $project:{
+              fullname:1,
+              avatar:1,
+              username:1
+            }
+          }
+        ]
+      }
+    },
+    {
+      $addFields:{
+        owner:{
+          $arrayElemAt:["$owner",0]
+        }
+      }
+    },
+    {
+      $sort:sortStage
+    },
+    {
+      $skip:pageSkip
+    },
+    {
+      $limit:parsedLimit
+    }
+  ])
+
+  return res.status(200)
+  .json(new ApiResponse(200,allVideo,"video fetched successfully"));
+})
+
 export { 
   publishAVideo, 
   getVideoById, 
   updateVideo,
   deleteVideo,
-  togglePublishStatus
+  togglePublishStatus,
+  getAllVideo
 };
