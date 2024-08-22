@@ -18,9 +18,12 @@ app.use(cookieParser());
 import userRoutes from "./routes/user.routes.js";
 import videoRoutes from "./routes/video.routes.js";
 import subscriptionRoutes  from "./routes/subscription.routes.js";
+import commentRoutes from "./routes/comment.routes.js"
+
 
 app.use('/api/v1/user',userRoutes);
 app.use('/api/v1/video',videoRoutes);
 app.use('/api/v1/subscription',subscriptionRoutes);
+app.use('/api/v1/comment',commentRoutes);
 
 export default app;
