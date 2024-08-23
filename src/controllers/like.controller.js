@@ -1,6 +1,7 @@
 import { ApiError } from "../utils/apiError.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { Like } from "../models/like.model.js";
+import {Comment} from "../models/comment.model.js"
 import { ApiResponse } from "../utils/apiResponse.js";
 import mongoose from "mongoose";
 
@@ -49,8 +50,55 @@ const toggleVideoLike=asyncHandler(async(req,res)=>{
     }
 })
 
+
+const toggleCommentLike=asyncHandler(async(req,res)=>{
+    const {commentId}=req.params;
+    if (!commentId) {
+        throw new ApiError(200,"comment id is required");
+    }
+
+    const commentLiked=await Like.aggregate([
+        {
+            $match:{
+                comment:new mongoose.Types.ObjectId(commentId)
+            }
+        },
+        {
+            $match:{
+                likedBy:new mongoose.Types.ObjectId(req.user._id)
+            }
+        }
+    ])
+
+    if (commentLiked.length<=0) {
+        const like=await Like.create({
+            comment:commentId,
+            likedBy:req.user._id
+        });
+
+        if (!like) {
+            throw new ApiError(400,"error occured while creating like in database");
+        }
+        return res.status(200)
+        .json(new ApiResponse(200,like,"you liked this comment"));
+    }
+
+    try {
+        const like=await Like.findOneAndDelete({comment:commentId,likedBy:req.user._id});
+        if (!like) {
+            throw new ApiError(400,"error occured while deleting like from database");
+        }
+        return res.status(200)
+        .json(new ApiResponse(200,like,"you dislike this comment"));
+    } catch (error) {
+        throw new ApiError(400,"error occured while updating like toggle on comment");
+    }
+})
+
+
 export{
-    toggleVideoLike
+    toggleVideoLike,
+    toggleCommentLike
 }
 
 

@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
-import { toggleVideoLike } from "../controllers/like.controller.js";
+import { toggleCommentLike, toggleVideoLike } from "../controllers/like.controller.js";
 
 const router=Router();
 
@@ -8,6 +8,7 @@ router.use(verifyJWT);
 
 
 router.post('/toggleVideoLike/:videoId',toggleVideoLike);
+router.post('/toggleCommentLike/:commentId',toggleCommentLike);
 
 
 
