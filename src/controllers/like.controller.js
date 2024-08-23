@@ -96,9 +96,56 @@ const toggleCommentLike=asyncHandler(async(req,res)=>{
 })
 
 
+const toggleTweetLike=asyncHandler(async(req,res)=>{
+    const {tweetId}=req.params;
+    if (!tweetId) {
+        throw new ApiError(200,"tweet id is required");
+    }
+
+    const tweetLiked=await Like.aggregate([
+        {
+            $match:{
+                tweet:new mongoose.Types.ObjectId(tweetId)
+            }
+        },
+        {
+            $match:{
+                likedBy:new mongoose.Types.ObjectId(req.user._id)
+            }
+        }
+    ])
+
+    if (tweetLiked.length<=0) {
+        const like=await Like.create({
+            tweet:tweetId,
+            likedBy:req.user._id
+        });
+
+        if (!like) {
+            throw new ApiError(400,"error occured while creating like in database");
+        }
+        return res.status(200)
+        .json(new ApiResponse(200,like,"you liked this tweet"));
+    }
+
+    try {
+        const like=await Like.findOneAndDelete({tweet:tweetId,likedBy:req.user._id});
+        if (!like) {
+            throw new ApiError(400,"error occured while deleting like from database");
+        }
+        return res.status(200)
+        .json(new ApiResponse(200,like,"you dislike this tweet"));
+    } catch (error) {
+        throw new ApiError(400,"error occured while updating like toggle on comment");
+    }
+})
+
+
+
 export{
     toggleVideoLike,
-    toggleCommentLike
+    toggleCommentLike,
+    toggleTweetLike
 }
 
 
