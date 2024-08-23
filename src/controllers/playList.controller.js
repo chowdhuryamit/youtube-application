@@ -2,6 +2,7 @@ import { Playlist } from "../models/playlist.model.js";
 import { ApiError } from "../utils/apiError.js";
 import { ApiResponse } from "../utils/apiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
+import mongoose from "mongoose";
 
 
 const createPlaylist=asyncHandler(async(req,res)=>{
@@ -162,7 +163,7 @@ const getPlaylistById=asyncHandler(async(req,res)=>{
     const playList=await Playlist.aggregate([
         {
             $match:{
-                _id:mongoose.Types.ObjectId(playlistId)
+                _id:new mongoose.Types.ObjectId(playlistId)
             }
         },
         {
@@ -191,13 +192,71 @@ const getPlaylistById=asyncHandler(async(req,res)=>{
                 from:"videos",
                 localField:"video",
                 foreignField:"_id",
-                as:"video"
+                as:"video",
+                pipeline:[
+                    {
+                        $lookup:{
+                            from:"users",
+                            localField:"owner",
+                            foreignField:"_id",
+                            as:"owner",
+                            pipeline:[
+                                {
+                                    $project:{
+                                        username:1,
+                                        avatar:1
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        $addFields:{
+                            owner:{$arrayElemAt:["$owner",0]}
+                        }
+                    },
+                ]
+            }
+        },
+        {
+            $addFields:{
+                totalVideos:{
+                    $size:"$video"
+                }
             }
         }
     ])
 
+    if (playList.length<=0) {
+        throw new ApiError(400,"playlist does not exist");
+    }
+
     return res.status(200)
-    .json(new ApiResponse(200,playList,"playlist fetched successfully"));
+    .json(new ApiResponse(200,playList[0],"playlist fetched successfully"));
+})
+
+const getUserPlaylist=asyncHandler(async(req,res)=>{
+    const playList=await Playlist.aggregate([
+        {
+            $match:{
+                owner:new mongoose.Types.ObjectId(req.user._id)
+            }
+        },
+        {
+           $addFields:{
+            totalVideos:{
+                $size:"$video"
+            }
+           }
+        }
+    ])
+
+    if (playList.length<=0) {
+        throw new ApiError("playlist does not exist");
+    }
+
+    return res.status(200)
+    .json(new ApiResponse(200,playList,"all playlist fetched successfully"));
 })
 
 export{
@@ -206,5 +265,6 @@ export{
     removeVideoFromPlaylist,
     deletePlaylist,
     updatePlaylist,
-    getPlaylistById
+    getPlaylistById,
+    getUserPlaylist
 }
