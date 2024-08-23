@@ -113,7 +113,6 @@ const deletePlaylist=asyncHandler(async(req,res)=>{
     .json(new ApiResponse(200,"playlist deleted successfully"));
 })
 
-
 const updatePlaylist=asyncHandler(async(req,res)=>{
     const {playlistId}=req.params;
     if (!playlistId) {
@@ -154,12 +153,58 @@ const updatePlaylist=asyncHandler(async(req,res)=>{
 
 })
 
+const getPlaylistById=asyncHandler(async(req,res)=>{
+    const {playlistId}=req.params;
+    if (!playlistId) {
+        throw new ApiError(404,"playlist id is required");
+    }
 
+    const playList=await Playlist.aggregate([
+        {
+            $match:{
+                _id:mongoose.Types.ObjectId(playlistId)
+            }
+        },
+        {
+            $lookup:{
+                from:"users",
+                localField:"owner",
+                foreignField:"_id",
+                as:"owner",
+                pipeline:[
+                    {
+                        $project:{
+                            username:1,
+                            avatar:1
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            $addFields:{
+                owner:{$arrayElemAt:["$owner",0]}
+            }
+        },
+        {
+            $lookup:{
+                from:"videos",
+                localField:"video",
+                foreignField:"_id",
+                as:"video"
+            }
+        }
+    ])
+
+    return res.status(200)
+    .json(new ApiResponse(200,playList,"playlist fetched successfully"));
+})
 
 export{
     createPlaylist,
     addVideoToPlayList,
     removeVideoFromPlaylist,
     deletePlaylist,
-    updatePlaylist
+    updatePlaylist,
+    getPlaylistById
 }
