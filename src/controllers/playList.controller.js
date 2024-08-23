@@ -14,8 +14,8 @@ const createPlaylist=asyncHandler(async(req,res)=>{
     }
 
     const playlist=await Playlist.create({
-        name,
-        description,
+        name:name.trim(),
+        description:description.trim(),
         owner:req.user._id
     })
 
@@ -88,7 +88,6 @@ const removeVideoFromPlaylist=asyncHandler(async(req,res)=>{
 
 })
 
-
 const deletePlaylist=asyncHandler(async(req,res)=>{
     const {playlistId}=req.params;
     if (!playlistId) {
@@ -115,9 +114,52 @@ const deletePlaylist=asyncHandler(async(req,res)=>{
 })
 
 
+const updatePlaylist=asyncHandler(async(req,res)=>{
+    const {playlistId}=req.params;
+    if (!playlistId) {
+        throw new ApiError(404,"playlist id is required");
+    }
+
+    const {name,description}=req.body;
+
+    const playList=await Playlist.findById(playlistId);
+    if (!playList) {
+        throw new ApiError(400,"invalid playlist id");
+    }
+
+    if (!playList.owner.equals(req.user._id)) {
+        throw new ApiError(400,"you are not the owner of the playlist");
+    }
+
+    // if (name) {
+    //     playList.name=name;
+    // }
+    // if (description) {
+    //     playList.description=description;
+    // }
+
+    try {
+        await Playlist.findByIdAndUpdate(playlistId,{
+            $set:{
+                name:name?.trim()||playList.name,
+                description:description?.trim()||playList.description
+            }
+        })
+    } catch (error) {
+        throw new ApiError(400,"error occured while updating playlist")
+    }
+
+    return res.status(200)
+    .json(new ApiResponse(200,"playlist updated successfully"));
+
+})
+
+
+
 export{
     createPlaylist,
     addVideoToPlayList,
     removeVideoFromPlaylist,
-    deletePlaylist
+    deletePlaylist,
+    updatePlaylist
 }
