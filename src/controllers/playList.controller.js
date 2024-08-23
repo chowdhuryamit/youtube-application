@@ -88,8 +88,36 @@ const removeVideoFromPlaylist=asyncHandler(async(req,res)=>{
 
 })
 
+
+const deletePlaylist=asyncHandler(async(req,res)=>{
+    const {playlistId}=req.params;
+    if (!playlistId) {
+        throw new ApiError(404,"playlist id is required");
+    }
+
+    const playList=await Playlist.findById(playlistId);
+    if (!playList) {
+        throw new ApiError(400,"invalid playlist id");
+    }
+
+    if (playList.owner.toString()!==req.user._id.toString()) {
+        throw new ApiError(400,"you are not the owner of this playlist");
+    }
+
+    try {
+        await Playlist.findByIdAndDelete(playlistId);
+    } catch (error) {
+        throw new ApiError(400,"error occured while deleting playlist");
+    }
+
+    return res.status(200)
+    .json(new ApiResponse(200,"playlist deleted successfully"));
+})
+
+
 export{
     createPlaylist,
     addVideoToPlayList,
-    removeVideoFromPlaylist
+    removeVideoFromPlaylist,
+    deletePlaylist
 }
