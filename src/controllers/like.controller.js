@@ -1,7 +1,6 @@
 import { ApiError } from "../utils/apiError.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { Like } from "../models/like.model.js";
-import {Comment} from "../models/comment.model.js"
 import { ApiResponse } from "../utils/apiResponse.js";
 import mongoose from "mongoose";
 
@@ -142,6 +141,10 @@ const toggleTweetLike=asyncHandler(async(req,res)=>{
 
 
 const getAllLikedVideo=asyncHandler(async(req,res)=>{
+    const { page = 1, limit = 10 } = req.query
+    const parsedLimit = parseInt(limit);
+    const pageSkip = (page - 1) * parsedLimit;
+    
     const allVideo=await Like.aggregate([
         {
             $match:{
@@ -181,6 +184,12 @@ const getAllLikedVideo=asyncHandler(async(req,res)=>{
             $project:{
                 video:1
             }
+        },
+        {
+            $skip: pageSkip,
+        },
+        {
+            $limit: parsedLimit,
         }
     ])
 
