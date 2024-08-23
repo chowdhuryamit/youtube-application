@@ -27,8 +27,36 @@ const createPlaylist=asyncHandler(async(req,res)=>{
     .json(new ApiResponse(200,playlist,"playlist is created successfully"));
 })
 
+const addVideoToPlayList=asyncHandler(async(req,res)=>{
+    const {playlistId,videoId}=req.params;
+    if (!playlistId) {
+        throw new ApiError(404,"playList id is required");
+    }
+    if (!videoId) {
+        throw new ApiError(400,"video id is required");
+    }
 
+    const playList=await Playlist.findById(playlistId);
+    if (!playList) {
+        throw new ApiError(400,"invalid playlist id");
+    }
+    if (playList.owner.toString()!==req.user._id.toString()){
+        throw new ApiError(401,"you are not the owner of this playlist");
+    }
+
+    playList.video.push(videoId);
+
+    try {
+        await playList.save({validateBeforeSave:false})
+    } catch (error) {
+        throw new ApiError(400,"error occured while saving video on playlist");
+    }
+
+    return res.status(200)
+    .json(new ApiResponse(200,playList,"video added to playlist"))
+})
 
 export{
     createPlaylist,
+    addVideoToPlayList
 }
