@@ -16,10 +16,14 @@ const addComment=asyncHandler(async(req,res)=>{
         throw new ApiError(400,"content is required");
     }
 
+    const userId=req.user._id;
+    if (!userId) {
+        throw new ApiError(400,"you have to login in your account");
+    }
     const comment=await Comment.create({
         content,
         video:videoId,
-        owner:req.user._id
+        owner:userId
     })
 
     if (!comment) {
