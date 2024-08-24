@@ -21,7 +21,8 @@ import subscriptionRoutes  from "./routes/subscription.routes.js";
 import commentRoutes from "./routes/comment.routes.js";
 import likeRoutes from "./routes/like.routes.js";
 import tweetRoutes from "./routes/tweet.routes.js";
-import playlist from "./routes/playList.routes.js"
+import playlist from "./routes/playList.routes.js";
+import dashboard from "./routes/dashboard.routes.js"
 
 
 app.use('/api/v1/user',userRoutes);
@@ -31,5 +32,6 @@ app.use('/api/v1/comment',commentRoutes);
 app.use('/api/v1/like',likeRoutes);
 app.use('/api/v1/tweet',tweetRoutes);
 app.use('/api/v1/playlist',playlist);
+app.use('/api/v1/dashboard',dashboard);
 
 export default app;
